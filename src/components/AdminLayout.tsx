@@ -1,6 +1,5 @@
-import { Outlet, NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
 import {
     LayoutDashboard,
     FileText,
@@ -12,7 +11,7 @@ import {
     ChevronLeft,
     ChevronRight
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './ThemeToggle';
 
