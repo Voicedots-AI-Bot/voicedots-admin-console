@@ -1,0 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@layer base {
+  :root {
+    --background: 250 45% 98%;
+    --foreground: 250 25% 12%;
+    --muted: 250 25% 93%;
+    --muted-foreground: 250 12% 42%;
+    --border: 262 35% 82%;
+    --card: 0 0% 100%;
+    --card-foreground: 250 25% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 250 25% 12%;
+    --primary: 262 90% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 250 25% 93%;
+    --secondary-foreground: 250 25% 12%;
+    --accent: 262 85% 94%;
+    --accent-foreground: 262 85% 38%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --input: 262 35% 82%;
+    --ring: 262 90% 60%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 240 10% 4%;
+    --foreground: 0 0% 95%;
+    --muted: 240 5% 15%;
+    --muted-foreground: 240 5% 60%;
+    --border: 240 5% 18%;
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 95%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 5% 15%;
+    --secondary-foreground: 0 0% 95%;
+    --accent: 262 83% 20%;
+    --accent-foreground: 262 83% 80%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+    --input: 240 5% 18%;
+    --ring: 262 83% 58%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Outfit', sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
