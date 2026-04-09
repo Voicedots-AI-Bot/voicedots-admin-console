@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { settingsApi, type GlobalSettings } from '@/lib/settingsApi';
 import { plansApi, type PricingPlan, type PricingPlanCreate, type PricingPlanUpdate } from '@/lib/plansApi';
-import { cn } from '@/lib/utils';
+import { cn, formatRate, toDecimalString } from '@/lib/utils';
 
 export const SettingsPage = () => {
     const [settings, setSettings] = useState<GlobalSettings | null>(null);
@@ -228,11 +228,11 @@ export const SettingsPage = () => {
                                 <div className="mt-6 space-y-2 pt-4 border-t border-border/50">
                                     <div className="flex justify-between text-xs">
                                         <span className="text-muted-foreground font-medium uppercase tracking-tight">LLM In/Out</span>
-                                        <span className="font-mono text-foreground">${plan.llm_input_rate.toFixed(4)} / ${plan.llm_output_rate.toFixed(4)}</span>
+                                        <span className="font-mono text-foreground">{formatRate(plan.llm_input_rate, 'USD')} / {formatRate(plan.llm_output_rate, 'USD')}</span>
                                     </div>
                                     <div className="flex justify-between text-xs">
                                         <span className="text-muted-foreground font-medium uppercase tracking-tight">STT/TTS</span>
-                                        <span className="font-mono text-foreground">₹{plan.stt_rate.toFixed(4)} / ₹{plan.tts_rate.toFixed(4)}</span>
+                                        <span className="font-mono text-foreground">{formatRate(plan.stt_rate, 'INR')} / {formatRate(plan.tts_rate, 'INR')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -261,9 +261,9 @@ export const SettingsPage = () => {
                                         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{field.label} ({field.unit})</label>
                                         <input
                                             type="number"
-                                            step="0.0001"
-                                            value={settings?.[field.key as keyof GlobalSettings] || 0}
-                                            onChange={(e) => setSettings({ ...settings!, [field.key]: parseFloat(e.target.value) })}
+                                            step="any"
+                                            value={toDecimalString(settings?.[field.key as keyof GlobalSettings] as number || 0)}
+                                            onChange={(e) => setSettings({ ...settings!, [field.key]: parseFloat(e.target.value) || 0 })}
                                             className="w-full rounded-xl border border-input bg-background/50 px-4 py-2.5 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
                                         />
                                     </div>
@@ -311,8 +311,8 @@ export const SettingsPage = () => {
             {isPlanModalOpen && editingPlan && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setIsPlanModalOpen(false)} />
-                    <div className="relative w-full max-w-lg rounded-3xl border border-border bg-card shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between p-6 border-b border-border">
+                    <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-3xl border border-border bg-card shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between p-6 border-b border-border shrink-0">
                             <div>
                                 <h2 className="text-xl font-bold">{'id' in editingPlan ? 'Edit Pricing Plan' : 'Create Custom Plan'}</h2>
                                 <p className="text-xs text-muted-foreground mt-1">Configure rates and duration for clients on this plan.</p>
@@ -322,7 +322,7 @@ export const SettingsPage = () => {
                             </button>
                         </div>
 
-                        <div className="p-6 space-y-4">
+                        <div className="p-6 space-y-4 overflow-y-auto no-scrollbar">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Plan Name</label>
                                 <input
@@ -339,9 +339,9 @@ export const SettingsPage = () => {
                                     <label className="text-sm font-medium">LLM Input Rate ($/1M tokens)</label>
                                     <input
                                         type="number"
-                                        step="0.0001"
-                                        value={editingPlan.llm_input_rate || 0}
-                                        onChange={(e) => setEditingPlan({ ...editingPlan, llm_input_rate: parseFloat(e.target.value) })}
+                                        step="any"
+                                        value={toDecimalString(editingPlan.llm_input_rate || 0)}
+                                        onChange={(e) => setEditingPlan({ ...editingPlan, llm_input_rate: parseFloat(e.target.value) || 0 })}
                                         className="w-full rounded-xl border border-input bg-background px-4 py-2 text-sm font-mono"
                                     />
                                 </div>
@@ -349,9 +349,9 @@ export const SettingsPage = () => {
                                     <label className="text-sm font-medium">LLM Output Rate ($/1M tokens)</label>
                                     <input
                                         type="number"
-                                        step="0.0001"
-                                        value={editingPlan.llm_output_rate || 0}
-                                        onChange={(e) => setEditingPlan({ ...editingPlan, llm_output_rate: parseFloat(e.target.value) })}
+                                        step="any"
+                                        value={toDecimalString(editingPlan.llm_output_rate || 0)}
+                                        onChange={(e) => setEditingPlan({ ...editingPlan, llm_output_rate: parseFloat(e.target.value) || 0 })}
                                         className="w-full rounded-xl border border-input bg-background px-4 py-2 text-sm font-mono"
                                     />
                                 </div>
@@ -362,9 +362,9 @@ export const SettingsPage = () => {
                                     <label className="text-sm font-medium">STT Rate (₹/hr)</label>
                                     <input
                                         type="number"
-                                        step="0.0001"
-                                        value={editingPlan.stt_rate || 0}
-                                        onChange={(e) => setEditingPlan({ ...editingPlan, stt_rate: parseFloat(e.target.value) })}
+                                        step="any"
+                                        value={toDecimalString(editingPlan.stt_rate || 0)}
+                                        onChange={(e) => setEditingPlan({ ...editingPlan, stt_rate: parseFloat(e.target.value) || 0 })}
                                         className="w-full rounded-xl border border-input bg-background px-4 py-2 text-sm font-mono"
                                     />
                                 </div>
@@ -372,9 +372,9 @@ export const SettingsPage = () => {
                                     <label className="text-sm font-medium">TTS Rate (₹/char)</label>
                                     <input
                                         type="number"
-                                        step="0.0001"
-                                        value={editingPlan.tts_rate || 0}
-                                        onChange={(e) => setEditingPlan({ ...editingPlan, tts_rate: parseFloat(e.target.value) })}
+                                        step="any"
+                                        value={toDecimalString(editingPlan.tts_rate || 0)}
+                                        onChange={(e) => setEditingPlan({ ...editingPlan, tts_rate: parseFloat(e.target.value) || 0 })}
                                         className="w-full rounded-xl border border-input bg-background px-4 py-2 text-sm font-mono"
                                     />
                                 </div>
@@ -392,7 +392,7 @@ export const SettingsPage = () => {
                             </div>
                         </div>
 
-                        <div className="flex justify-end gap-3 p-6 border-t border-border">
+                        <div className="flex justify-end gap-3 p-6 border-t border-border shrink-0">
                             <button
                                 type="button"
                                 onClick={() => setIsPlanModalOpen(false)}

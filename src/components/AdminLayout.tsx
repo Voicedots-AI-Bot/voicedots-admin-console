@@ -76,7 +76,7 @@ export const AdminLayout = () => {
                         </button>
                     </div>
 
-                    <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                    <nav className="flex-1 overflow-y-auto no-scrollbar py-4 px-3 space-y-1">
                         {navItems.map((item) => (
                             <NavLink
                                 key={item.name}
@@ -145,7 +145,7 @@ export const AdminLayout = () => {
                 </header>
 
                 {/* Main Area */}
-                <main className="flex-1 overflow-y-auto bg-background p-4 md:p-8">
+                <main className="flex-1 overflow-y-auto no-scrollbar bg-background p-4 md:p-8">
                     <div className="mx-auto max-w-7xl animate-in fade-in duration-500">
                         <Outlet />
                     </div>

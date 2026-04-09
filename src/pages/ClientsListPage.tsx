@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { clientsApi, type ClientListItem } from '@/lib/clientsApi';
 import { 
     Search, Plus, Users, UserCheck, Crown, Star,
-    X, Loader2, Copy, Check, CheckCircle2, AlertCircle
+    X, Copy, Check, CheckCircle2, AlertCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn, formatPrice } from '@/lib/utils';

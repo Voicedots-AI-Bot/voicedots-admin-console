@@ -7,7 +7,7 @@ import {
     Cpu, MessageCircle, Mic, Volume2, DollarSign, Activity
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { cn, formatPrice } from '@/lib/utils';
+import { cn, formatPrice, formatRate, toDecimalString } from '@/lib/utils';
 
 type Tab = 'subscription' | 'usage' | 'billing';
 
@@ -250,11 +250,11 @@ export const ClientDetailPage = () => {
                                     {[
                                         { label: 'Plan', value: client.plan },
                                         { label: 'Status', value: client.status },
-                                        { label: 'LLM Input Rate', value: `$${client.llm_input_charges.toFixed(4)}/1M tokens` },
-                                        { label: 'LLM Output Rate', value: `$${client.llm_output_charges.toFixed(4)}/1M tokens` },
-                                        { label: 'STT Rate', value: `₹${client.stt_charges.toFixed(4)}/hr` },
-                                        { label: 'TTS Rate', value: `₹${client.tts_charges.toFixed(4)}/char` },
-                                        { label: 'Auxiliary Charges', value: `₹${client.auxiliary_charges.toFixed(4)}` },
+                                        { label: 'LLM Input Rate', value: `${formatRate(client.llm_input_charges, 'USD')}/1M tokens` },
+                                        { label: 'LLM Output Rate', value: `${formatRate(client.llm_output_charges, 'USD')}/1M tokens` },
+                                        { label: 'STT Rate', value: `${formatRate(client.stt_charges, 'INR')}/hr` },
+                                        { label: 'TTS Rate', value: `${formatRate(client.tts_charges, 'INR')}/char` },
+                                        { label: 'Auxiliary Charges', value: formatPrice(client.auxiliary_charges) },
                                     ].map((item) => (
                                         <div key={item.label} className="p-4 rounded-xl bg-secondary/30 border border-border/50">
                                             <p className="text-xs text-muted-foreground font-medium">{item.label}</p>
@@ -327,7 +327,7 @@ export const ClientDetailPage = () => {
                                                     <div>
                                                         <p className="text-sm font-medium">{item.label}</p>
                                                         <p className="text-xs text-muted-foreground font-mono">
-                                                            {tokenDisplay} × {currencySymbol}{item.rate.toFixed(4)}{unitLabel}
+                                                            {tokenDisplay} × {formatRate(item.rate, isLLM ? 'USD' : 'INR')}{unitLabel}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -475,13 +475,13 @@ const EditSubscriptionModal = ({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative w-full max-w-md rounded-2xl border border-border bg-card shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex items-center justify-between mb-5">
+            <div className="relative w-full max-w-md max-h-[90vh] flex flex-col rounded-2xl border border-border bg-card shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-center justify-between p-6 border-b border-border">
                     <h3 className="text-lg font-bold">Edit Subscription</h3>
                     <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground"><X className="h-4 w-4" /></button>
                 </div>
 
-                <div className="space-y-4">
+                <div className="p-6 space-y-4 overflow-y-auto no-scrollbar">
                     <div>
                         <label className="text-sm font-medium">Plan</label>
                         <select value={plan} onChange={(e) => setPlan(e.target.value)}
@@ -514,29 +514,29 @@ const EditSubscriptionModal = ({
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className="text-[10px] font-bold text-muted-foreground uppercase">LLM Input</label>
-                                <input type="number" step="0.000000000001" value={rates.llm_input_charges} onChange={(e) => setRates({...rates, llm_input_charges: parseFloat(e.target.value)})}
+                                <input type="number" step="any" value={toDecimalString(rates.llm_input_charges)} onChange={(e) => setRates({...rates, llm_input_charges: parseFloat(e.target.value) || 0})}
                                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs font-mono" />
                             </div>
                             <div>
                                 <label className="text-[10px] font-bold text-muted-foreground uppercase">LLM Output</label>
-                                <input type="number" step="0.000000000001" value={rates.llm_output_charges} onChange={(e) => setRates({...rates, llm_output_charges: parseFloat(e.target.value)})}
+                                <input type="number" step="any" value={toDecimalString(rates.llm_output_charges)} onChange={(e) => setRates({...rates, llm_output_charges: parseFloat(e.target.value) || 0})}
                                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs font-mono" />
                             </div>
                             <div>
                                 <label className="text-[10px] font-bold text-muted-foreground uppercase">STT Rate</label>
-                                <input type="number" step="0.000000000001" value={rates.stt_charges} onChange={(e) => setRates({...rates, stt_charges: parseFloat(e.target.value)})}
+                                <input type="number" step="any" value={toDecimalString(rates.stt_charges)} onChange={(e) => setRates({...rates, stt_charges: parseFloat(e.target.value) || 0})}
                                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs font-mono" />
                             </div>
                             <div>
                                 <label className="text-[10px] font-bold text-muted-foreground uppercase">TTS Rate</label>
-                                <input type="number" step="0.000000000001" value={rates.tts_charges} onChange={(e) => setRates({...rates, tts_charges: parseFloat(e.target.value)})}
+                                <input type="number" step="any" value={toDecimalString(rates.tts_charges)} onChange={(e) => setRates({...rates, tts_charges: parseFloat(e.target.value) || 0})}
                                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs font-mono" />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex justify-end gap-3 mt-6">
+                <div className="flex justify-end gap-3 p-6 border-t border-border shrink-0">
                     <button onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-secondary transition-colors">Cancel</button>
                     <button onClick={handleSave} disabled={isSaving}
                         className="px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-70 transition-colors flex items-center gap-2">
