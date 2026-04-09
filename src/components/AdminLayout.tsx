@@ -4,12 +4,14 @@ import {
     LayoutDashboard,
     FileText,
     MessageSquare,
+    Users,
     LogOut,
     Menu,
     X,
     UserCircle,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Settings
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -30,6 +32,8 @@ export const AdminLayout = () => {
         { name: 'Dashboard', to: '/', icon: LayoutDashboard },
         { name: 'Blogs', to: '/blogs', icon: FileText },
         { name: 'Messages', to: '/messages', icon: MessageSquare },
+        { name: 'Clients', to: '/clients', icon: Users },
+        { name: 'Settings', to: '/settings', icon: Settings },
     ];
 
     return (
@@ -46,7 +50,7 @@ export const AdminLayout = () => {
             <aside className={cn(
                 "fixed inset-y-0 left-0 z-50 bg-card border-r border-border transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:block",
                 sidebarOpen ? "translate-x-0" : "-translate-x-full",
-                isCollapsed ? "w-20" : "w-64"
+                isCollapsed ? "w-20" : "w-[280px] sm:w-64"
             )}>
                 <div className="h-full flex flex-col relative">
                     {/* Desktop Collapse Toggle */}
@@ -124,15 +128,18 @@ export const AdminLayout = () => {
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4 lg:hidden">
-                    <div className="flex items-center">
+                <header className="h-16 border-b border-border bg-card/80 backdrop-blur-md flex items-center justify-between px-4 sticky top-0 z-30 lg:hidden">
+                    <div className="flex items-center gap-3">
                         <button
-                            className="p-2 -ml-2 mr-2 text-muted-foreground hover:text-foreground rounded-lg"
+                            className="p-2 -ml-2 text-muted-foreground hover:text-foreground rounded-xl hover:bg-secondary transition-all"
                             onClick={() => setSidebarOpen(true)}
                         >
-                            <Menu className="h-6 w-6" />
+                            <Menu className="h-5 w-5" />
                         </button>
-                        <span className="font-semibold text-foreground">Admin Portal</span>
+                        <div className="flex items-center gap-2">
+                             <img src="/voicedotslogo.svg" alt="Voicedots" className="h-6 w-auto mix-blend-difference invert dark:mix-blend-normal dark:invert-0" />
+                             <span className="font-bold text-sm bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Admin Center</span>
+                        </div>
                     </div>
                     <ThemeToggle />
                 </header>

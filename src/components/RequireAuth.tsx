@@ -3,7 +3,7 @@ import type { ReactElement } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const RequireAuth = ({ children }: { children: ReactElement }) => {
-    const { user, loading } = useAuth();
+    const { user, loading, token } = useAuth();
     const location = useLocation();
 
     if (loading) {
@@ -14,7 +14,7 @@ export const RequireAuth = ({ children }: { children: ReactElement }) => {
         );
     }
 
-    if (!user) {
+    if (!user || !token) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 

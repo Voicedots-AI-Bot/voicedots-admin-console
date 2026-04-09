@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { blogsApi } from '@/lib/blogsApi';
 import { ArrowLeft, Save, Image as ImageIcon, Loader2, RefreshCw, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { RichTextEditor } from '@/components/RichTextEditor';
@@ -18,7 +18,6 @@ export const BlogEditorPage = () => {
 
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(isEditing);
-    const [isUploading, setIsUploading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
 
     useEffect(() => {
@@ -29,21 +28,12 @@ export const BlogEditorPage = () => {
 
     const loadBlog = async () => {
         try {
-            const { data, error } = await supabase
-                .from('blogs')
-                .select('*')
-                .eq('id', id)
-                .single();
-
-            if (error) throw error;
-
-            if (data) {
-                setTitle(data.title || '');
-                setSlug(data.slug || '');
-                setContent(data.content || '');
-                setPublished(data.published || false);
-                setFeatureImageUrl(data.feature_image_url || '');
-            }
+            const data = await blogsApi.getBlog(id!);
+            setTitle(data.title || '');
+            setSlug(data.slug || '');
+            setContent(data.content || '');
+            setPublished(data.published || false);
+            setFeatureImageUrl(data.feature_image_url || '');
         } catch (error) {
             console.error('Error loading blog:', error);
             setErrorMsg('Failed to load blog.');
@@ -57,39 +47,6 @@ export const BlogEditorPage = () => {
         setSlug(title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploading(true);
-        setErrorMsg('');
-        try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-            const filePath = `blog-images/${fileName}`;
-
-            const { error: uploadError } = await supabase.storage
-                .from('blog-images')
-                .upload(filePath, file);
-
-            if (uploadError) {
-                console.error("Storage upload failed - Bucket might not exist", uploadError);
-                throw new Error('Storage bucket "blog-images" might not exist. Please create it in Supabase first.');
-            }
-
-            const { data } = supabase.storage
-                .from('blog-images')
-                .getPublicUrl(filePath);
-
-            setFeatureImageUrl(data.publicUrl);
-        } catch (error: any) {
-            console.error('Error uploading image:', error);
-            setErrorMsg(error.message || 'Failed to upload image. Ensure the storage bucket exists.');
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg('');
@@ -101,26 +58,24 @@ export const BlogEditorPage = () => {
 
         setIsSaving(true);
         try {
-            const blogData: any = {
+            const blogData = {
                 title,
                 slug,
                 content,
                 published,
-                feature_image_url: featureImageUrl,
+                feature_image_url: featureImageUrl || undefined,
             };
 
             if (isEditing) {
-                const { error } = await supabase.from('blogs').update(blogData).eq('id', id);
-                if (error) throw error;
+                await blogsApi.updateBlog(id!, blogData);
             } else {
-                const { error } = await supabase.from('blogs').insert([blogData]);
-                if (error) throw error;
+                await blogsApi.createBlog(blogData);
             }
 
             navigate('/blogs');
         } catch (error: any) {
             console.error('Error saving blog:', error);
-            setErrorMsg(`Database Error: ${error.message}. Wait, check if your Supabase "blogs" table has the exact columns.`);
+            setErrorMsg(error.message || 'Failed to save blog.');
         } finally {
             setIsSaving(false);
         }
@@ -230,7 +185,7 @@ export const BlogEditorPage = () => {
 
                             <div className="space-y-3">
                                 <label className="text-sm font-semibold text-foreground block">Feature Image</label>
-                                <p className="text-xs text-muted-foreground mb-3">Upload a cover image for the blog card. Make sure a bucket named `blog-images` exists in Supabase.</p>
+                                <p className="text-xs text-muted-foreground mb-3">Enter a URL for the cover image, or leave empty.</p>
                                 {featureImageUrl ? (
                                     <div className="relative group rounded-lg overflow-hidden border border-border aspect-video shadow-sm">
                                         <img src={featureImageUrl} alt="Feature" className="object-cover w-full h-full" />
@@ -244,23 +199,21 @@ export const BlogEditorPage = () => {
                                         </div>
                                     </div>
                                 ) : (
-                                    <label className="flex flex-col items-center justify-center aspect-video rounded-lg border-2 border-dashed border-input bg-background/50 hover:bg-secondary/50 hover:border-primary/50 transition-all cursor-pointer group">
-                                        {isUploading ? (
-                                            <div className="flex flex-col items-center gap-3">
-                                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                                <span className="text-xs font-medium text-muted-foreground">Uploading...</span>
+                                    <div>
+                                        <input
+                                            type="url"
+                                            value={featureImageUrl}
+                                            onChange={(e) => setFeatureImageUrl(e.target.value)}
+                                            placeholder="https://example.com/image.jpg"
+                                            className="w-full rounded-lg border border-input bg-background/50 px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all"
+                                        />
+                                        <div className="flex flex-col items-center justify-center aspect-video rounded-lg border-2 border-dashed border-input bg-background/50 mt-3">
+                                            <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center mb-3">
+                                                <ImageIcon className="h-6 w-6 text-muted-foreground" />
                                             </div>
-                                        ) : (
-                                            <>
-                                                <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                                                    <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                                                </div>
-                                                <span className="text-sm font-medium text-foreground">Click to upload image</span>
-                                                <span className="text-xs text-muted-foreground mt-1">PNG, JPG or WEBP (max. 5MB)</span>
-                                            </>
-                                        )}
-                                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
-                                    </label>
+                                            <span className="text-xs text-muted-foreground">Enter an image URL above</span>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         </div>

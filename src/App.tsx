@@ -8,6 +8,10 @@ import { DashboardPage } from "@/pages/DashboardPage";
 import { BlogsManagerPage } from "@/pages/BlogsManagerPage";
 import { BlogEditorPage } from "@/pages/BlogEditorPage";
 import { MessagesPage } from "@/pages/MessagesPage";
+import { ClientsListPage } from "@/pages/ClientsListPage";
+import { AddClientPage } from "@/pages/AddClientPage";
+import { ClientDetailPage } from "@/pages/ClientDetailPage";
+import { SettingsPage } from "@/pages/SettingsPage";
 
 function App() {
   return (
@@ -22,6 +26,10 @@ function App() {
               <Route path="blogs" element={<BlogsManagerPage />} />
               <Route path="blogs/:id" element={<BlogEditorPage />} />
               <Route path="messages" element={<MessagesPage />} />
+              <Route path="clients" element={<ClientsListPage />} />
+              <Route path="clients/add" element={<AddClientPage />} />
+              <Route path="clients/:agentId" element={<ClientDetailPage />} />
+              <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Routes>
         </Router>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { blogsApi } from '@/lib/blogsApi';
+import { messagesApi, type ContactMessage } from '@/lib/messagesApi';
 import {
     FileText,
     MessageSquare,
@@ -28,16 +29,6 @@ interface DashboardStats {
     unreadMessages: number;
 }
 
-interface Message {
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    message: string;
-    status: string;
-    created_at: string;
-}
-
 export const DashboardPage = () => {
     const [stats, setStats] = useState<DashboardStats>({
         totalBlogs: 0,
@@ -45,7 +36,7 @@ export const DashboardPage = () => {
         publishedBlogs: 0,
         unreadMessages: 0,
     });
-    const [recentMessages, setRecentMessages] = useState<Message[]>([]);
+    const [recentMessages, setRecentMessages] = useState<ContactMessage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const [chartData, setChartData] = useState<{ name: string; messages: number }[]>([]);
@@ -57,63 +48,43 @@ export const DashboardPage = () => {
     const fetchDashboardData = async () => {
         setIsLoading(true);
         try {
-            if (!import.meta.env.VITE_SUPABASE_URL) return;
-
-            // Fetch Stats
-            const [blogsResponse, publishedBlogsResponse, messagesResponse, unreadMessagesResponse] = await Promise.all([
-                supabase.from('blogs').select('*', { count: 'exact', head: true }),
-                supabase.from('blogs').select('*', { count: 'exact', head: true }).eq('published', true),
-                supabase.from('contacts').select('*', { count: 'exact', head: true }),
-                supabase.from('contacts').select('*', { count: 'exact', head: true }).neq('status', 'resolved'),
+            // Fetch Stats in parallel
+            const [blogStats, messageStats, allMessages] = await Promise.all([
+                blogsApi.getStats(),
+                messagesApi.getStats(),
+                messagesApi.getMessages(),
             ]);
 
             setStats({
-                totalBlogs: blogsResponse.count || 0,
-                publishedBlogs: publishedBlogsResponse.count || 0,
-                totalMessages: messagesResponse.count || 0,
-                unreadMessages: unreadMessagesResponse.count || 0,
+                totalBlogs: blogStats.total,
+                publishedBlogs: blogStats.published,
+                totalMessages: messageStats.total,
+                unreadMessages: messageStats.unread,
             });
 
-            // Fetch Recent Messages (for the list)
-            const { data: messagesData } = await supabase
-                .from('contacts')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(5);
+            // Get recent 5 messages
+            setRecentMessages(allMessages.slice(0, 5));
 
-            if (messagesData) {
-                setRecentMessages(messagesData);
-            }
+            // Build chart data — last 7 days
+            const last7DaysData = Array.from({ length: 7 }).map((_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - (6 - i));
+                return {
+                    dateStr: format(d, 'yyyy-MM-dd'),
+                    name: format(d, 'EEE'),
+                    messages: 0
+                };
+            });
 
-            // Fetch all messages for the chart to group by date
-            const { data: allMessages } = await supabase
-                .from('contacts')
-                .select('created_at')
-                .order('created_at', { ascending: false });
+            allMessages.forEach(msg => {
+                const msgDateStr = msg.created_at.split('T')[0];
+                const dayData = last7DaysData.find(d => d.dateStr === msgDateStr);
+                if (dayData) {
+                    dayData.messages += 1;
+                }
+            });
 
-            if (allMessages) {
-                // Initialize an array with the last 7 days (including today)
-                const last7DaysData = Array.from({ length: 7 }).map((_, i) => {
-                    const d = new Date();
-                    d.setDate(d.getDate() - (6 - i));
-                    return {
-                        dateStr: format(d, 'yyyy-MM-dd'),
-                        name: format(d, 'EEE'), // Mon, Tue, etc.
-                        messages: 0
-                    };
-                });
-
-                // Count messages per day
-                allMessages.forEach(msg => {
-                    const msgDateStr = msg.created_at.split('T')[0];
-                    const dayData = last7DaysData.find(d => d.dateStr === msgDateStr);
-                    if (dayData) {
-                        dayData.messages += 1;
-                    }
-                });
-
-                setChartData(last7DaysData);
-            }
+            setChartData(last7DaysData);
 
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
@@ -160,12 +131,12 @@ export const DashboardPage = () => {
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
-                <p className="text-muted-foreground mt-2">Welcome to your admin dashboard.</p>
+                <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">Overview</h1>
+                <p className="text-sm text-muted-foreground mt-1">Welcome to your admin dashboard.</p>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 {statCards.map((stat, i) => (
                     <div key={i} className="rounded-xl border border-border bg-card p-6 shadow-sm">
                         <div className="flex items-center justify-between">

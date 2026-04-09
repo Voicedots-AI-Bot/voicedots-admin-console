@@ -1,18 +1,8 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Mail, Search, Info, CheckCircle2 } from 'lucide-react';
+import { messagesApi, type ContactMessage } from '@/lib/messagesApi';
+import { Mail, Search, Info, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
-
-interface ContactMessage {
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone: string;
-    message: string;
-    status: string;
-    created_at: string;
-}
+import { cn } from '@/lib/utils';
 
 export const MessagesPage = () => {
     const [messages, setMessages] = useState<ContactMessage[]>([]);
@@ -44,19 +34,13 @@ export const MessagesPage = () => {
     const fetchMessages = async () => {
         setIsLoading(true);
         try {
-            if (!import.meta.env.VITE_SUPABASE_URL) return;
-            const { data, error } = await supabase
-                .from('contacts')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            setMessages(data || []);
-            setFilteredMessages(data || []);
+            const data = await messagesApi.getMessages();
+            setMessages(data);
+            setFilteredMessages(data);
 
             // If a message was selected, update its reference
             if (selectedMessage) {
-                const updated = data?.find(m => m.id === selectedMessage.id);
+                const updated = data.find(m => m.id === selectedMessage.id);
                 if (updated) setSelectedMessage(updated);
             }
         } catch (error) {
@@ -69,12 +53,7 @@ export const MessagesPage = () => {
     const toggleStatus = async (id: string, currentStatus: string) => {
         const newStatus = currentStatus === 'resolved' ? 'unread' : 'resolved';
         try {
-            const { error } = await supabase
-                .from('contacts')
-                .update({ status: newStatus })
-                .eq('id', id);
-
-            if (error) throw error;
+            await messagesApi.updateStatus(id, newStatus);
 
             // Refresh local state silently
             const updatedMessages = messages.map(msg =>
@@ -110,9 +89,12 @@ export const MessagesPage = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
                 {/* Messages List */}
-                <div className="rounded-2xl border border-border bg-card overflow-hidden lg:col-span-1 h-[calc(100vh-220px)] min-h-[500px] flex flex-col shadow-sm">
+                <div className={cn(
+                    "rounded-2xl border border-border bg-card overflow-hidden lg:col-span-1 lg:h-[calc(100vh-220px)] min-h-[500px] flex flex-col shadow-sm transition-all",
+                    selectedMessage ? "hidden lg:flex" : "flex h-[calc(100vh-260px)]"
+                )}>
                     <div className="p-5 border-b border-border bg-secondary/30 font-semibold flex items-center justify-between">
                         <span>Inbox</span>
                         <span className="bg-primary/10 text-primary text-xs py-1 px-2.5 rounded-full font-bold">{filteredMessages.length}</span>
@@ -156,17 +138,26 @@ export const MessagesPage = () => {
                 </div>
 
                 {/* Message Detail View */}
-                <div className="rounded-2xl border border-border bg-card lg:col-span-2 shadow-sm h-[calc(100vh-220px)] min-h-[500px] flex flex-col relative overflow-hidden">
+                <div className={cn(
+                    "rounded-2xl border border-border bg-card lg:col-span-2 shadow-sm lg:h-[calc(100vh-220px)] min-h-[500px] flex flex-col relative overflow-hidden transition-all",
+                    selectedMessage ? "flex h-[calc(100vh-260px)]" : "hidden lg:flex"
+                )}>
                     {/* Decorative gradient background element for modern feel */}
                     <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-primary/5 blur-3xl pointer-events-none"></div>
 
                     {selectedMessage ? (
                         <>
-                            <div className="p-8 border-b border-border space-y-5 bg-background/50 backdrop-blur-sm z-10">
+                            <div className="p-6 lg:p-8 border-b border-border space-y-5 bg-background/50 backdrop-blur-sm z-10">
+                                <button
+                                    onClick={() => setSelectedMessage(null)}
+                                    className="flex lg:hidden items-center gap-2 text-xs font-bold text-primary mb-2"
+                                >
+                                    <ArrowLeft className="h-3.5 w-3.5" /> Back to Inbox
+                                </button>
                                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-5">
                                     <div>
                                         <div className="flex items-center gap-3">
-                                            <h2 className="text-2xl font-bold tracking-tight">{selectedMessage.first_name} {selectedMessage.last_name}</h2>
+                                            <h2 className="text-xl lg:text-2xl font-bold tracking-tight">{selectedMessage.first_name} {selectedMessage.last_name}</h2>
                                             <span className={`text-[10px] px-2.5 py-1 uppercase tracking-wider rounded-full font-bold shadow-sm ${selectedMessage.status === 'resolved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-900/50' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/50'}`}>
                                                 {selectedMessage.status || 'UNREAD'}
                                             </span>
@@ -204,7 +195,7 @@ export const MessagesPage = () => {
                                 )}
                             </div>
 
-                            <div className="p-8 flex-1 overflow-y-auto z-10">
+                            <div className="p-6 lg:p-8 flex-1 overflow-y-auto z-10">
                                 <h3 className="text-xs font-bold text-muted-foreground mb-4 uppercase tracking-widest">Message Content</h3>
                                 <div className="text-foreground whitespace-pre-wrap leading-loose border border-border/60 rounded-2xl p-7 bg-background shadow-sm text-[15px]">
                                     {selectedMessage.message || <span className="text-muted-foreground italic">No message content provided.</span>}

@@ -1,16 +1,8 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { blogsApi, type Blog } from '@/lib/blogsApi';
 import { Plus, Edit2, Trash2, ExternalLink, Globe, GlobeLock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-
-interface Blog {
-    id: string;
-    title: string;
-    slug: string;
-    published: boolean;
-    created_at: string;
-}
 
 export const BlogsManagerPage = () => {
     const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -23,14 +15,8 @@ export const BlogsManagerPage = () => {
     const fetchBlogs = async () => {
         setIsLoading(true);
         try {
-            if (!import.meta.env.VITE_SUPABASE_URL) return;
-            const { data, error } = await supabase
-                .from('blogs')
-                .select('id, title, slug, published, created_at')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            setBlogs(data || []);
+            const data = await blogsApi.getBlogs();
+            setBlogs(data);
         } catch (error) {
             console.error('Error fetching blogs:', error);
         } finally {
@@ -42,8 +28,7 @@ export const BlogsManagerPage = () => {
         if (!window.confirm('Are you sure you want to delete this blog post?')) return;
 
         try {
-            const { error } = await supabase.from('blogs').delete().eq('id', id);
-            if (error) throw error;
+            await blogsApi.deleteBlog(id);
             setBlogs(blogs.filter(b => b.id !== id));
         } catch (error) {
             console.error('Error deleting blog:', error);
@@ -56,13 +41,10 @@ export const BlogsManagerPage = () => {
         setBlogs(blogs.map(b => b.id === id ? { ...b, published: !currentStatus } : b));
 
         try {
-            const { error } = await supabase.from('blogs').update({ published: !currentStatus }).eq('id', id);
-            if (error) {
-                // Revert if error
-                setBlogs(blogs.map(b => b.id === id ? { ...b, published: currentStatus } : b));
-                throw error;
-            }
+            await blogsApi.togglePublish(id);
         } catch (error) {
+            // Revert if error
+            setBlogs(blogs.map(b => b.id === id ? { ...b, published: currentStatus } : b));
             console.error('Error updating publish status:', error);
             alert('Failed to update status.');
         }
