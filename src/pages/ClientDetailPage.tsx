@@ -315,7 +315,6 @@ export const ClientDetailPage = () => {
                                             : item.tokens * item.rate;
                                             
                                         const unitLabel = isLLM ? '/1M tokens' : isSTT ? '/hr' : '/char';
-                                        const currencySymbol = isLLM ? '$' : '₹';
                                         const tokenDisplay = isSTT ? item.tokens.toFixed(2) : item.tokens.toLocaleString();
 
                                         return (
