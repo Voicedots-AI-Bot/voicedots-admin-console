@@ -129,7 +129,7 @@ export const DashboardPage = () => {
     ];
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6 lg:space-y-5">
             <div>
                 <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">Overview</h1>
                 <p className="text-sm text-muted-foreground mt-1">Welcome to your admin dashboard.</p>
@@ -162,7 +162,7 @@ export const DashboardPage = () => {
 
             <div className="grid gap-6 lg:grid-cols-7">
                 {/* Activity Chart */}
-                <div className="rounded-xl border border-border bg-card shadow-sm lg:col-span-4 flex flex-col h-[400px]">
+                <div className="rounded-xl border border-border bg-card shadow-sm lg:col-span-4 flex flex-col h-[350px] lg:h-[320px]">
                     <div className="p-6 border-b border-border">
                         <h3 className="font-semibold leading-none tracking-tight">Message Volume</h3>
                         <p className="text-sm text-muted-foreground mt-1.5">Number of messages received over the last 7 days.</p>
@@ -208,7 +208,7 @@ export const DashboardPage = () => {
                 </div>
 
                 {/* Recent Messages List */}
-                <div className="rounded-xl border border-border bg-card shadow-sm lg:col-span-3 flex flex-col h-[400px]">
+                <div className="rounded-xl border border-border bg-card shadow-sm lg:col-span-3 flex flex-col h-[350px] lg:h-[320px]">
                     <div className="p-6 border-b border-border flex items-center justify-between shrink-0">
                         <div>
                             <h3 className="font-semibold leading-none tracking-tight">Recent Messages</h3>
@@ -231,7 +231,11 @@ export const DashboardPage = () => {
                         ) : (
                             <div className="divide-y divide-border">
                                 {recentMessages.map((msg) => (
-                                    <div key={msg.id} className="p-4 hover:bg-secondary/30 transition-colors">
+                                    <Link 
+                                        key={msg.id} 
+                                        to={`/messages?id=${msg.id}`}
+                                        className="block p-4 hover:bg-secondary/30 transition-colors"
+                                    >
                                         <div className="flex items-center justify-between mb-1">
                                             <p className="text-sm font-medium text-foreground truncate">{msg.first_name} {msg.last_name}</p>
                                             <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
@@ -247,7 +251,7 @@ export const DashboardPage = () => {
                                             )}
                                         </div>
                                         <p className="text-sm text-muted-foreground line-clamp-2">{msg.message}</p>
-                                    </div>
+                                    </Link>
                                 ))}
                             </div>
                         )}

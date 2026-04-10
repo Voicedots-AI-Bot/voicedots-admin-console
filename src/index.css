@@ -59,7 +59,7 @@
     color: hsl(var(--foreground));
     font-family: 'Outfit', sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
-    @apply overflow-hidden;
+    @apply lg:overflow-hidden;
   }
 }
 

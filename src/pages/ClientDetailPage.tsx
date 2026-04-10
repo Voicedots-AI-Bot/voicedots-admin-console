@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { clientsApi, type ClientDetail } from '@/lib/clientsApi';
+import { plansApi, type PricingPlan } from '@/lib/plansApi';
 import {
     ArrowLeft, Copy, Check, Loader2, Trash2,
     Edit2, X, Eye, EyeOff, Key, Clock,
@@ -453,6 +454,37 @@ const EditSubscriptionModal = ({
     const [limit, setLimit] = useState(currentLimit);
     const [rates, setRates] = useState(currentRates);
     const [isSaving, setIsSaving] = useState(false);
+    const [plans, setPlans] = useState<PricingPlan[]>([]);
+    const [isLoadingPlans, setIsLoadingPlans] = useState(true);
+
+    useEffect(() => {
+        const fetchPlans = async () => {
+            try {
+                const data = await plansApi.getPlans();
+                setPlans(data);
+            } catch (error) {
+                console.error('Error fetching plans:', error);
+            } finally {
+                setIsLoadingPlans(false);
+            }
+        };
+        fetchPlans();
+    }, []);
+
+    const handlePlanChange = (planName: string) => {
+        setPlan(planName);
+        const selectedPlan = plans.find(p => p.name === planName);
+        if (selectedPlan) {
+            setLimit(selectedPlan.default_duration_limit);
+            setRates({
+                ...rates,
+                llm_input_charges: selectedPlan.llm_input_rate,
+                llm_output_charges: selectedPlan.llm_output_rate,
+                stt_charges: selectedPlan.stt_rate,
+                tts_charges: selectedPlan.tts_rate,
+            });
+        }
+    };
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -483,12 +515,18 @@ const EditSubscriptionModal = ({
                 <div className="p-6 space-y-4 overflow-y-auto no-scrollbar">
                     <div>
                         <label className="text-sm font-medium">Plan</label>
-                        <select value={plan} onChange={(e) => setPlan(e.target.value)}
-                            className="mt-1.5 w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors">
-                            <option value="Free">Free</option>
-                            <option value="Starter">Starter</option>
-                            <option value="Pro">Pro</option>
-                            <option value="Enterprise">Enterprise</option>
+                        <select 
+                            value={plan} 
+                            onChange={(e) => handlePlanChange(e.target.value)}
+                            disabled={isLoadingPlans}
+                            className="mt-1.5 w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors disabled:opacity-50">
+                            {isLoadingPlans ? (
+                                <option>Loading plans...</option>
+                            ) : (
+                                plans.map(p => (
+                                    <option key={p.id} value={p.name}>{p.name}</option>
+                                ))
+                            )}
                         </select>
                     </div>
                     <div>
@@ -504,43 +542,45 @@ const EditSubscriptionModal = ({
                         <input
                             type="number"
                             value={limit}
-                            onChange={(e) => setLimit(parseFloat(e.target.value))}
-                            className="mt-1.5 w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm font-mono focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                            readOnly
+                            className="mt-1.5 w-full rounded-lg border border-input bg-secondary/50 px-4 py-2.5 text-sm font-mono focus:outline-none cursor-not-allowed text-muted-foreground"
                         />
+                        <p className="text-[10px] text-muted-foreground mt-1 italic">* Managed via plan settings</p>
                     </div>
                     <div className="pt-2 border-t border-border mt-4">
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Custom Rates</p>
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Plan Rates (Read-only)</p>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className="text-[10px] font-bold text-muted-foreground uppercase">LLM Input</label>
-                                <input type="number" step="any" value={toDecimalString(rates.llm_input_charges)} onChange={(e) => setRates({...rates, llm_input_charges: parseFloat(e.target.value) || 0})}
-                                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs font-mono" />
+                                <input type="text" readOnly value={toDecimalString(rates.llm_input_charges)}
+                                    className="w-full rounded-lg border border-input bg-secondary/50 px-3 py-2 text-xs font-mono cursor-not-allowed text-muted-foreground" />
                             </div>
                             <div>
                                 <label className="text-[10px] font-bold text-muted-foreground uppercase">LLM Output</label>
-                                <input type="number" step="any" value={toDecimalString(rates.llm_output_charges)} onChange={(e) => setRates({...rates, llm_output_charges: parseFloat(e.target.value) || 0})}
-                                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs font-mono" />
+                                <input type="text" readOnly value={toDecimalString(rates.llm_output_charges)}
+                                    className="w-full rounded-lg border border-input bg-secondary/50 px-3 py-2 text-xs font-mono cursor-not-allowed text-muted-foreground" />
                             </div>
                             <div>
                                 <label className="text-[10px] font-bold text-muted-foreground uppercase">STT Rate</label>
-                                <input type="number" step="any" value={toDecimalString(rates.stt_charges)} onChange={(e) => setRates({...rates, stt_charges: parseFloat(e.target.value) || 0})}
-                                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs font-mono" />
+                                <input type="text" readOnly value={toDecimalString(rates.stt_charges)}
+                                    className="w-full rounded-lg border border-input bg-secondary/50 px-3 py-2 text-xs font-mono cursor-not-allowed text-muted-foreground" />
                             </div>
                             <div>
                                 <label className="text-[10px] font-bold text-muted-foreground uppercase">TTS Rate</label>
-                                <input type="number" step="any" value={toDecimalString(rates.tts_charges)} onChange={(e) => setRates({...rates, tts_charges: parseFloat(e.target.value) || 0})}
-                                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs font-mono" />
+                                <input type="text" readOnly value={toDecimalString(rates.tts_charges)}
+                                    className="w-full rounded-lg border border-input bg-secondary/50 px-3 py-2 text-xs font-mono cursor-not-allowed text-muted-foreground" />
                             </div>
                         </div>
+                        <p className="text-[10px] text-muted-foreground mt-2 italic text-center">To use different rates, please create or update a plan in Settings.</p>
                     </div>
                 </div>
 
                 <div className="flex justify-end gap-3 p-6 border-t border-border shrink-0">
                     <button onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-secondary transition-colors">Cancel</button>
-                    <button onClick={handleSave} disabled={isSaving}
+                    <button onClick={handleSave} disabled={isSaving || isLoadingPlans}
                         className="px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-70 transition-colors flex items-center gap-2">
                         {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                        Save
+                        Save Changes
                     </button>
                 </div>
             </div>

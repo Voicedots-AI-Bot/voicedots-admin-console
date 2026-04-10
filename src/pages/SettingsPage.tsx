@@ -133,10 +133,10 @@ export const SettingsPage = () => {
     };
 
     return (
-        <div className="space-y-8 max-w-5xl mx-auto pb-20">
+        <div className="space-y-6 lg:space-y-5 max-w-5xl mx-auto pb-10">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+                    <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">Settings</h1>
                     <p className="text-muted-foreground mt-2">Manage global defaults and pricing plans for VoiceDots.</p>
                 </div>
                 
@@ -243,7 +243,7 @@ export const SettingsPage = () => {
                 <form onSubmit={handleSaveGlobal} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                     <div className="grid gap-6 md:grid-cols-2">
                         {/* Rate Controls */}
-                        <div className="space-y-6 rounded-2xl border border-border bg-card p-8 shadow-sm">
+                        <div className="space-y-6 rounded-2xl border border-border bg-card p-6 lg:p-5 shadow-sm">
                             <div className="flex items-center gap-2 text-lg font-bold border-b border-border pb-4">
                                 <LayoutGrid className="h-5 w-5 text-primary" />
                                 Fallback Charge Rates
@@ -272,7 +272,7 @@ export const SettingsPage = () => {
                         </div>
 
                         {/* Limit Controls */}
-                        <div className="space-y-6 rounded-2xl border border-border bg-card p-8 shadow-sm h-fit">
+                        <div className="space-y-6 rounded-2xl border border-border bg-card p-6 lg:p-5 shadow-sm h-fit">
                             <div className="flex items-center gap-2 text-lg font-bold border-b border-border pb-4">
                                 <Clock className="h-5 w-5 text-primary" />
                                 Fallback Limits

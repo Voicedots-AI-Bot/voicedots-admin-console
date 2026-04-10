@@ -24,6 +24,7 @@ export const AdminLayout = () => {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     const handleSignOut = async () => {
+        setSidebarOpen(false);
         await signOut();
         navigate('/login');
     };
@@ -37,7 +38,7 @@ export const AdminLayout = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-background text-foreground flex">
+        <div className="min-h-screen lg:h-screen bg-background text-foreground flex">
             {/* Mobile Sidebar Overlay */}
             {sidebarOpen && (
                 <div
@@ -81,6 +82,7 @@ export const AdminLayout = () => {
                             <NavLink
                                 key={item.name}
                                 to={item.to}
+                                onClick={() => setSidebarOpen(false)}
                                 title={isCollapsed ? item.name : undefined}
                                 className={({ isActive }) => cn(
                                     "flex items-center rounded-lg text-sm font-medium transition-colors",
@@ -127,7 +129,7 @@ export const AdminLayout = () => {
             </aside>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <div className="flex-1 flex flex-col min-w-0 lg:overflow-hidden">
                 <header className="h-16 border-b border-border bg-card/80 backdrop-blur-md flex items-center justify-between px-4 sticky top-0 z-30 lg:hidden">
                     <div className="flex items-center gap-3">
                         <button

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { messagesApi, type ContactMessage } from '@/lib/messagesApi';
 import { Mail, Search, Info, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
@@ -10,6 +11,17 @@ export const MessagesPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
+    const [searchParams] = useSearchParams();
+    const messageId = searchParams.get('id');
+
+    useEffect(() => {
+        if (messageId && messages.length > 0) {
+            const msg = messages.find(m => m.id === messageId);
+            if (msg) {
+                setSelectedMessage(msg);
+            }
+        }
+    }, [messageId, messages]);
 
     useEffect(() => {
         fetchMessages();
