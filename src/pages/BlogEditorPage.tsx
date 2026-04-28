@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { blogsApi } from '@/lib/blogsApi';
+import { API_URL } from '@/lib/api';
 import { ArrowLeft, Save, Image as ImageIcon, Loader2, RefreshCw, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { RichTextEditor } from '@/components/RichTextEditor';
@@ -15,6 +16,9 @@ export const BlogEditorPage = () => {
     const [content, setContent] = useState('');
     const [published, setPublished] = useState(false);
     const [featureImageUrl, setFeatureImageUrl] = useState('');
+    const imageUrlRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(isEditing);
@@ -45,6 +49,25 @@ export const BlogEditorPage = () => {
     const generateSlug = () => {
         if (!title) return;
         setSlug(title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        setErrorMsg('');
+        try {
+            const { url } = await blogsApi.uploadImage(file);
+            const fullUrl = url.startsWith('http') ? url : `${API_URL}${url}`;
+            setFeatureImageUrl(fullUrl);
+        } catch (error: any) {
+            console.error('Error uploading image:', error);
+            setErrorMsg('Failed to upload image. Please try again.');
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -201,17 +224,53 @@ export const BlogEditorPage = () => {
                                 ) : (
                                     <div>
                                         <input
+                                            ref={imageUrlRef}
                                             type="url"
                                             value={featureImageUrl}
                                             onChange={(e) => setFeatureImageUrl(e.target.value)}
                                             placeholder="https://example.com/image.jpg"
                                             className="w-full rounded-lg border border-input bg-background/50 px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all"
                                         />
-                                        <div className="flex flex-col items-center justify-center aspect-video rounded-lg border-2 border-dashed border-input bg-background/50 mt-3">
-                                            <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center mb-3">
-                                                <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                                        
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleFileUpload}
+                                            className="hidden"
+                                        />
+
+                                        <div 
+                                            onClick={() => fileInputRef.current?.click()}
+                                            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                            onDrop={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                const file = e.dataTransfer.files?.[0];
+                                                if (file && file.type.startsWith('image/')) {
+                                                    const mockEvent = { target: { files: [file] } } as any;
+                                                    handleFileUpload(mockEvent);
+                                                }
+                                            }}
+                                            className={`flex flex-col items-center justify-center aspect-video rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer mt-3 group ${isUploading ? 'opacity-50 cursor-wait' : ''}`}
+                                        >
+                                            <div className="h-12 w-12 rounded-full bg-secondary group-hover:bg-primary/10 flex items-center justify-center mb-3 transition-colors">
+                                                {isUploading ? (
+                                                    <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                                                ) : (
+                                                    <ImageIcon className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                                                )}
                                             </div>
-                                            <span className="text-xs text-muted-foreground">Enter an image URL above</span>
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-xs text-muted-foreground group-hover:text-primary font-medium transition-colors text-center px-4">
+                                                    {isUploading ? 'Uploading...' : 'Click to upload or drag image here'}
+                                                </span>
+                                                {!isUploading && (
+                                                    <span className="text-[10px] text-muted-foreground/60 group-hover:text-primary/60 transition-colors">
+                                                        Supports JPG, PNG, GIF
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 )}

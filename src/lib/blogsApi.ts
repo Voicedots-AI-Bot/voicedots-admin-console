@@ -34,4 +34,10 @@ export const blogsApi = {
         api.patch<{ message: string; published: boolean }>(`/blogs/${id}/publish`),
 
     deleteBlog: (id: string) => api.delete(`/blogs/${id}`),
+    
+    uploadImage: (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return api.post<{ url: string }>('/storage/upload', formData);
+    },
 };

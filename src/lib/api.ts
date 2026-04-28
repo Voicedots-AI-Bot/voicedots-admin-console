@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 /**
  * Base API client with JWT token management.
@@ -8,11 +8,14 @@ class ApiClient {
         return localStorage.getItem('voicedots_token');
     }
 
-    private getHeaders(extra?: Record<string, string>): Record<string, string> {
+    private getHeaders(extra?: Record<string, string>, isFormData: boolean = false): Record<string, string> {
         const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
             ...extra,
         };
+
+        if (!isFormData) {
+            headers['Content-Type'] = 'application/json';
+        }
 
         const token = this.getToken();
         if (token) {
@@ -52,10 +55,11 @@ class ApiClient {
     }
 
     async post<T>(path: string, body?: unknown): Promise<T> {
+        const isFormData = body instanceof FormData;
         const res = await fetch(`${API_URL}${path}`, {
             method: 'POST',
-            headers: this.getHeaders(),
-            body: body ? JSON.stringify(body) : undefined,
+            headers: this.getHeaders({}, isFormData),
+            body: isFormData ? (body as FormData) : (body ? JSON.stringify(body) : undefined),
         });
         return this.handleResponse<T>(res);
     }
